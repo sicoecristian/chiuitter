@@ -7,13 +7,13 @@ import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.item_chiuit.view.*
 import ro.upt.ac.chiuitter.R
 import ro.upt.ac.chiuitter.domain.Chiuit
+import kotlin.reflect.KFunction1
 
 
 class ChiuitRecyclerViewAdapter(
-        private val chiuitList: List<Chiuit>,
-        private val onShareClick: (Chiuit) -> (Unit)
-
-// TODO("Add a new callback triggered when delete button was pressed")
+    private val chiuitList: List<Chiuit>,
+    private val onShareClick: (Chiuit) -> (Unit),
+    private val onDelClick: (Chiuit) -> (Unit)
 
 ) : RecyclerView.Adapter<ChiuitRecyclerViewAdapter.ChiuitViewHolder>() {
 
@@ -30,11 +30,15 @@ class ChiuitRecyclerViewAdapter(
         holder.bind(chiuitList[position])
     }
 
+
     inner class ChiuitViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
         init {
             itemView.ibt_share.setOnClickListener { onShareClick(chiuitList[adapterPosition]) }
-            TODO("Trigger delete callback same as for share")
+
+            itemView.deleteButton.setOnClickListener {
+                onDelClick(chiuitList[adapterPosition])
+            }
         }
 
         fun bind(chiuit: Chiuit) {

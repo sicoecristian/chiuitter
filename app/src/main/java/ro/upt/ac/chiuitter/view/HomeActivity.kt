@@ -3,14 +3,20 @@ package ro.upt.ac.chiuitter.view
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
+import kotlinx.android.synthetic.main.item_chiuit.*
 import kotlinx.android.synthetic.main.view_home.*
+
 import ro.upt.ac.chiuitter.R
 import ro.upt.ac.chiuitter.data.database.ChiuitDbStore
 import ro.upt.ac.chiuitter.data.database.RoomDatabase
+import ro.upt.ac.chiuitter.data.dummy.DummyChiuitStore
+import ro.upt.ac.chiuitter.domain.Chiuit
+import ro.upt.ac.chiuitter.view.ComposeActivity.Companion.EXTRA_TEXT
 import ro.upt.ac.chiuitter.viewmodel.HomeViewModel
 import ro.upt.ac.chiuitter.viewmodel.HomeViewModelFactory
 
@@ -36,20 +42,30 @@ class HomeActivity : AppCompatActivity() {
             layoutManager = LinearLayoutManager(this@HomeActivity)
         }
 
-        viewModel.chiuitsLiveData.observe(this, Observer { chiuts ->
-            TODO("Instantiate an adapter with the received list and assign it to recycler view")
+        viewModel.chiuitsLiveData.observe(this, Observer { chiuits ->
+            // Instantiate an adapter with the received list and assign it to recycler view
+            rv_chiuit_list.adapter = ChiuitRecyclerViewAdapter(chiuits, this::shareChiuit, this::deleteChiuit)
         })
 
         viewModel.retrieveChiuits()
     }
 
+    private fun deleteChiuit(chiuit: Chiuit) {
+        viewModel.removeChiuit(chiuit)
+    }
+
+
     /*
     Defines text sharing/sending *implicit* intent, opens the application chooser menu
     and then starts a new activity which supports sharing/sending text.
      */
-    private fun shareChiuit(text: String) {
+    private fun shareChiuit(chiuit: Chiuit) {
         val sendIntent = Intent().apply {
-            TODO("Customize an implicit intent which triggers text sharing")
+
+            action = Intent.ACTION_SEND;
+            type = "text/plain";
+            putExtra(Intent.EXTRA_TEXT, chiuit.description);
+
         }
 
         val intentChooser = Intent.createChooser(sendIntent, "")
@@ -61,8 +77,15 @@ class HomeActivity : AppCompatActivity() {
     Defines an *explicit* intent which will be used to start ComposeActivity.
      */
     private fun composeChiuit() {
-        val intent = Intent(this, ComposeActivity::class.java)
-        startActivityForResult(intent, COMPOSE_REQUEST_CODE)
+
+        val composeActivityIntent = Intent(this,ComposeActivity::class.java).apply {
+
+        }
+
+
+        // We start a new activity that we expect to return the acquired text as the result.
+
+        startActivityForResult(composeActivityIntent, COMPOSE_REQUEST_CODE)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -74,10 +97,17 @@ class HomeActivity : AppCompatActivity() {
 
     private fun extractText(data: Intent?) {
         data?.let {
-            val text = data.getStringExtra(ComposeActivity.EXTRA_TEXT)
-            if (!text.isNullOrBlank()) {
-                viewModel.addChiuit(text)
+
+
+            val extractedText = data.getStringExtra(EXTRA_TEXT);
+
+
+            if(extractedText.isNullOrEmpty()){
+                Toast.makeText(this, "The text is null or empty, please try again !", Toast.LENGTH_SHORT).show();
+            }else{
+                viewModel.addChiuit(extractedText);
             }
+
         }
     }
 
